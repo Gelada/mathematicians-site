@@ -6,8 +6,8 @@ import rehypeKatex from 'rehype-katex';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://gelada.github.io'
-	base: '/mathematicians-site'
+	site: 'https://gelada.github.io',
+	base: '/mathematicians-site',
 	integrations: [
 		starlight({
 			title: 'My Docs',
