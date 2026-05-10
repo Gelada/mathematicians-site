@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2dCombinedJS</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body,#app{width:100%;height:100%;overflow:hidden}
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { mount, scriptMod } from './main.js';
+
+    const UI = {"textInputs":[{"id":"cfPrefix","label":"CF prefix","default":""},{"id":"cfPeriod","label":"CF period","default":"1"}],"buttons":[{"label":"Set lattice","action":"onSetLattice"}],"dropdowns":[{"uniform":"uFlow","label":"Flow","options":["Geodesic","Horocyclic vertical","Horocyclic horizontal"],"value":0},{"uniform":"uCell","label":"Cell","options":["Unit cell","Series cell","Whole plane"],"value":2}]};
+
+    const app = document.getElementById('app');
+    const handle = await mount(app);
+
+    function injectUI(list) {
+      const css = 'width:100%;background:var(--bg-tertiary,#2a2a2a);color:var(--text-primary,#eee);border:1px solid var(--border-primary,#444);border-radius:4px;padding:4px 8px;font-size:12px;outline:none;box-sizing:border-box;';
+
+      for (const dd of UI.dropdowns) {
+        const wrap = document.createElement('div');
+        wrap.className = 'uniform-control uniform-control-select';
+        const row = document.createElement('div');
+        row.className = 'uniform-control-label-row';
+        const lbl = document.createElement('label');
+        lbl.className = 'uniform-control-label';
+        lbl.textContent = dd.label;
+        row.appendChild(lbl);
+        wrap.appendChild(row);
+        const sel = document.createElement('select');
+        sel.style.cssText = css + 'cursor:pointer;';
+        dd.options.forEach((opt, i) => {
+          const o = document.createElement('option');
+          o.value = i;
+          o.textContent = opt;
+          if (i === dd.value) o.selected = true;
+          sel.appendChild(o);
+        });
+        sel.addEventListener('change', () => handle.setUniform(dd.uniform, parseInt(sel.value)));
+        wrap.appendChild(sel);
+        list.appendChild(wrap);
+      }
+
+      const vals = {};
+      for (const ti of UI.textInputs) {
+        vals[ti.id] = ti.default ?? '';
+        const wrap = document.createElement('div');
+        wrap.className = 'uniform-control';
+        const row = document.createElement('div');
+        row.className = 'uniform-control-label-row';
+        const lbl = document.createElement('label');
+        lbl.className = 'uniform-control-label';
+        lbl.textContent = ti.label;
+        row.appendChild(lbl);
+        wrap.appendChild(row);
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.value = ti.default ?? '';
+        inp.style.cssText = css;
+        inp.addEventListener('input', () => { vals[ti.id] = inp.value; });
+        wrap.appendChild(inp);
+        list.appendChild(wrap);
+      }
+
+      for (const btn of UI.buttons) {
+        const wrap = document.createElement('div');
+        wrap.className = 'uniform-control';
+        const b = document.createElement('button');
+        b.textContent = btn.label;
+        b.style.cssText = css + 'cursor:pointer;padding:6px 8px;';
+        b.addEventListener('click', () => { if (scriptMod && typeof scriptMod[btn.action] === "function") scriptMod[btn.action]({ ...vals }, handle); });
+        wrap.appendChild(b);
+        list.appendChild(wrap);
+      }
+    }
+
+    const observer = new MutationObserver(() => {
+      const list = app.querySelector('.uniform-controls-list');
+      if (list && !list.dataset.uiInjected) {
+        list.dataset.uiInjected = '1';
+        injectUI(list);
+        observer.disconnect();
+      }
+    });
+    observer.observe(app, { childList: true, subtree: true });
+  </script>
+</body>
+</html>
